@@ -1,0 +1,84 @@
+diff --git a/cmake/Modules/Platform/Emscripten.cmake b/cmake/Modules/Platform/Emscripten.cmake
+index f6e220bcc..adf121669 100644
+--- cmake/Modules/Platform/Emscripten.cmake
++++ cmake/Modules/Platform/Emscripten.cmake
+@@ -227,6 +227,7 @@ execute_process(COMMAND "${EMSCRIPTEN_ROOT_PATH}/em-config${EMCC_SUFFIX}" "CACHE
+ if (NOT _emcache_result EQUAL 0)
+   message(FATAL_ERROR "Failed to find emscripten cache directory with command \"'${EMSCRIPTEN_ROOT_PATH}/em-config${EMCC_SUFFIX}' CACHE\"! Process returned with error code ${_emcache_result}.")
+ endif()
++file(TO_CMAKE_PATH "${_emcache_output}" _emcache_output)
+ set(EMSCRIPTEN_SYSROOT "${_emcache_output}/sysroot")
+ 
+ list(APPEND CMAKE_FIND_ROOT_PATH "${EMSCRIPTEN_SYSROOT}")
+@@ -433,3 +434,12 @@ endif()
+ # complain about unused CMake variable.
+ if (CMAKE_CROSSCOMPILING_EMULATOR)
+ endif()
++
++# TODO: CMake appends <sysroot>/usr/include to implicit includes; switching to use usr/include will make this redundant.
++if ("${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" STREQUAL "")
++  set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${EMSCRIPTEN_SYSROOT}/include")
++endif()
++if ("${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}" STREQUAL "")
++  set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "${EMSCRIPTEN_SYSROOT}/include")
++endif()
++unset(_em_sysroot_include)
+diff --git a/tests/cmake/find_package/CMakeLists.txt b/tests/cmake/find_package/CMakeLists.txt
+index e9d45b744..8ce0094d5 100644
+--- tests/cmake/find_package/CMakeLists.txt
++++ tests/cmake/find_package/CMakeLists.txt
+@@ -4,7 +4,7 @@ project(find_package VERSION 0.42)
+ 
+ find_package(Foo REQUIRED)
+ 
+-add_executable(Bar bar.c)
++add_executable(Bar bar.cpp)
+ 
+ target_link_libraries(Bar Foo)
+ 
+diff --git a/tests/cmake/find_package/bar.c b/tests/cmake/find_package/bar.c
+deleted file mode 100644
+index 27dc07f60..000000000
+--- tests/cmake/find_package/bar.c
++++ /dev/null
+@@ -1,7 +0,0 @@
+-#include <stdio.h>
+-#include <foo.h>
+-
+-int main() {
+-  printf("foo: %d\n", foo());
+-  return 0;
+-}
+diff --git a/tests/cmake/find_package/bar.cpp b/tests/cmake/find_package/bar.cpp
+new file mode 100644
+index 000000000..3e7df4ea1
+--- /dev/null
++++ tests/cmake/find_package/bar.cpp
+@@ -0,0 +1,8 @@
++// Must be a standard C++ header to implicitly test CMake not emitting -isystem for some imported targets: see #17132
++#include <iostream>
++#include <foo.h>
++
++int main() {
++  std::cout << "foo: " << foo() << std::endl;
++  return 0;
++}
+diff --git a/tests/cmake/install_lib/foo.h b/tests/cmake/install_lib/foo.h
+index 5d5f8f0c9..5be081f44 100644
+--- tests/cmake/install_lib/foo.h
++++ tests/cmake/install_lib/foo.h
+@@ -1 +1,14 @@
++#ifndef _FOO_H
++#define _FOO_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ int foo();
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif

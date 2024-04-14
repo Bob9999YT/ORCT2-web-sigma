@@ -1,0 +1,20 @@
+FROM docker.io/openrct2/openrct2-cli:0.3.5.1
+
+USER 0
+
+RUN apt-get update && \
+  apt-get install -y websockify && \
+  cp /usr/lib/websockify/rebind*.so /usr/bin/rebind.so
+
+# This is dumb, but I don't really understand how RCT2 servers work...
+COPY save.sv6 /home/openrct2/.config/OpenRCT2/save/save.sv6
+
+COPY groups.json /home/openrct2/.config/OpenRCT2/groups.json
+
+RUN chmod -R g+rw /home/openrct2/.config/OpenRCT2 && \
+  chown -R openrct2:root /home/openrct2/.config/OpenRCT2
+
+USER openrct2:0
+
+ENV PORT=32348
+ENTRYPOINT sh -c "websockify 8080 127.0.0.1:$PORT & openrct2-cli host /home/openrct2/.config/OpenRCT2/save/save.sv6 --port=$PORT --headless --user-data-path=/home/openrct2/.config/OpenRCT2 --password=$PASSWORD"

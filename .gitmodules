@@ -1,0 +1,24 @@
+[submodule "vendored/OpenRCT2"]
+	path = vendored/OpenRCT2
+	url = https://github.com/Mstrodl/OpenRCT2
+[submodule "vendored/emsdk"]
+	path = vendored/emsdk
+	url = https://github.com/emscripten-core/emsdk
+[submodule "vendored/openssl"]
+	path = vendored/openssl
+	url = https://github.com/openssl/openssl
+[submodule "vendored/speexdsp"]
+	path = vendored/speexdsp
+	url = https://gitlab.xiph.org/xiph/speexdsp.git/
+[submodule "vendored/json"]
+	path = vendored/json
+	url = https://github.com/nlohmann/json
+[submodule "vendored/icu"]
+	path = vendored/icu
+	url = https://github.com/unicode-org/icu
+[submodule "vendored/zip"]
+	path = vendored/zip
+	url = https://github.com/nih-at/libzip
+[submodule "vendored/zlib"]
+	path = vendored/zlib
+	url = https://github.com/madler/zlib
