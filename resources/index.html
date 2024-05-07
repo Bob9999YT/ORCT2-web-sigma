@@ -29,7 +29,8 @@
     <canvas id="screen" width="1600" height="1200"></canvas>
     <div id="overlay">
       <div id="overlay-text"></div>
-      <button id="ack">Select your RCT2 data path</button>
+      <label for="data-folder">Select your RCT2 data path</label>
+      <input id="data-folder" type="file" webkitdirectory="1"/>
     </div>
     <script>
       var assets = {};
@@ -168,13 +169,33 @@
         }
       }
 
-      async function doAllLoads() {
-        const ackButton = document.getElementById("ack");
-        const prom = new Promise((resolve, reject) => {
-          ackButton.addEventListener("click", () => {
-            resolve();
+      function customDirectoryPicker() {
+        const button = document.getElementById("data-folder");
+        if (button.tagName == "BUTTON") {
+          return (new Promise((resolve, reject) => {
+            button.addEventListener("click", () => {
+              resolve();
+            }, {once: true});
+          })).then(() => showDirectoryPicker());
+        } else {
+          button.value = '';
+          return new Promise((resolve, reject) => {
+            button.addEventListener("change", (ev) => {
+              resolve(ev.target.files);
+            }, {once: true});
           });
-        });
+        }
+      }
+
+      async function doAllLoads() {
+        if (window.showDirectoryPicker) {
+          document.getElementById("data-folder").remove();
+          const ackButton = document.createElement("button");
+          ackButton.id = "data-folder";
+          ackButton.textContent = "Pick your RCT2 Data directory"
+          document.getElementById("overlay").appendChild(ackButton);
+        }
+        let prom = customDirectoryPicker();
         if (localStorage["rct2-data-version"] != 1) {
           const loads = await fetch("output.json")
             .then((response) => response.json())
@@ -194,23 +215,30 @@
 
         const overlayText = document.getElementById("overlay-text");
         if (localStorage["rct2-data-checked"] != 1) {
-          const { showDirectoryPicker } = await import("https://cdn.jsdelivr.net/npm/file-system-access/lib/es2018.js");
-          await prom;
           while (1) {
             try {
-              const dirHandle = await showDirectoryPicker();
-              const file = await (await dirHandle.getDirectoryHandle("Data")).getFileHandle("ch.dat");
-              await ingestDirectory(["rct2-data-path", "app"], dirHandle);
+              const files = await prom;
+              if (files instanceof FileSystemDirectoryHandle) {
+                const file = await (await files.getDirectoryHandle("Data")).getFileHandle("ch.dat");
+                await ingestDirectory(["rct2-data-path", "app"], files);
+              } else {
+                const filesArr = Array.from(files).map(file => ({file, path: file.webkitRelativePath.slice(file.webkitRelativePath.indexOf("/") + 1)}));
+                if (!filesArr.some(file => file.path == "Data/ch.dat")) {
+                  throw new Error("No Data/ch.dat file");
+                }
+                for(const file of filesArr) {
+                  assets["/rct2-data-path/app/" + file.path] = new Uint8Array(await file.file.arrayBuffer());
+                }
+              }
               break;
             } catch(err) {
               console.error(err);
               overlayText.textContent = "Sorry, that didn't look right. The game folder should contain a folder named 'Data' which contains 'ch.dat'"
             }
-            localStorage["rct2-data-checked"] = 1;
+            prom = customDirectoryPicker();
           }
           await load("./user-data-path/config.ini");
         }
-        ackButton.remove();
 
         document.getElementById("overlay").style.display = "none";
         launch();
