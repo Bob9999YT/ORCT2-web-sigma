@@ -17,9 +17,6 @@ ENV PRE="source /app/vendored/emsdk/emsdk_env.sh"
 RUN cd /app/vendored/emsdk && \
   ./emsdk install latest && \
   ./emsdk activate latest && \
-  cd "/app/vendored/emsdk/upstream/emscripten" && \
-  ( patch --dry-run -p0 -Rfsi "/app/patches/emscripten.patch">/dev/null || \
-    patch -p0 -i "/app/patches/emscripten.patch" ) && \
   echo 'export MAKEFLAGS="-j$(nproc)"' >> /app/vendored/emsdk/emsdk_env.sh
 
 RUN mkdir -p /app/build && \
@@ -121,7 +118,7 @@ ENV EMSCRIPTEN_ROOT /app/vendored/emsdk/upstream/emscripten
 RUN cd /app/build && \
   $PRE && \
   emcmake env \
-      PKG_CONFIG_LIBDIR="$EMSCRIPTEN_ROOT/cache/sysroot/local/lib/pkgconfig:$EMSCRIPTEN_ROOT/cache/sysroot/lib/pkgconfig:$EMSCRIPTEN_ROOT/cache/sysroot/share/pkgconfig" \
+      PKG_CONFIG_PATH="$EMSCRIPTEN_ROOT/cache/sysroot/local/lib/pkgconfig:$EMSCRIPTEN_ROOT/cache/sysroot/lib/pkgconfig:$EMSCRIPTEN_ROOT/cache/sysroot/share/pkgconfig" \
     cmake /app/vendored/OpenRCT2 \
     -DOPENSSL_INCLUDE_DIR="/app/vendored/openssl/include" \
     -DOPENSSL_SSL_LIBRARY="/app/vendored/openssl/libssl.a" \
@@ -139,6 +136,9 @@ RUN cd /app/build && \
     -DDISABLE_HTTP:BOOL=FALSE \
     -DDISABLE_TTF:BOOL=TRUE \
     -DENABLE_SCRIPTING:BOOL=FALSE \
+    -DENABLE_SCRIPTING:BOOL=FALSE \
+    -DDISABLE_VORBIS:BOOL=TRUE \
+    -DDISABLE_FLAC:BOOL=TRUE \
     -DCMAKE_SYSTEM_NAME=Emscripten && \
   DESTDIR=. emmake make install VERBOSE=1 || DESTDIR=. MAKEFLAGS= emmake make install VERBOSE=1
 

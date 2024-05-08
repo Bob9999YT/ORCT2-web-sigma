@@ -28,26 +28,11 @@ prepare() {
   # Make sure submodules are up to date
   git -C $PWD submodule update -i --recursive
 
-  # Link nlohmann_json
-  rm -rf "$OPENRCT_SRCROOT/src/thirdparty/nlohmann"
-  ln -s "$JSON_ROOT/include/nlohmann" "$OPENRCT_SRCROOT/src/thirdparty/nlohmann"
-
-  # Link FindSpeexDSP.cmake
-  rm -f "$OPENRCT_SRCROOT/cmake/FindSpeexDSP.cmake"
-  ln -s "$PATCHES_ROOT/FindSpeexDSP.cmake" "$OPENRCT_SRCROOT/cmake/FindSpeexDSP.cmake"
-
   # Install/update emsdk
   pushd $EMSDK_ROOT
   ./emsdk install latest
   ./emsdk activate latest
   source ./emsdk_env.sh
-  popd
-
-  # Unfortunately we can't just cherry-pick this one...
-  pushd "$EMSDK_ROOT/upstream/emscripten"
-  if ! patch --dry-run -p0 -Rfsi "$PATCHES_ROOT/emscripten.patch">/dev/null; then
-    patch -p0 -i "$PATCHES_ROOT/emscripten.patch"
-  fi
   popd
 
   # Create the build root for OpenRCT2
@@ -179,7 +164,7 @@ build_openrct2_assets() {
 build_openrct2() {
   pushd $OPENRCT_BUILDROOT
   emcmake env \
-      PKG_CONFIG_LIBDIR="$EMSDK_ROOT/upstream/emscripten/cache/sysroot/local/lib/pkgconfig:$EMSDK_ROOT/upstream/emscripten/cache/sysroot/lib/pkgconfig:$EMSDK_ROOT/upstream/emscripten/cache/sysroot/share/pkgconfig" \
+      PKG_CONFIG_PATH="$EMSDK_ROOT/upstream/emscripten/cache/sysroot/local/lib/pkgconfig:$EMSDK_ROOT/upstream/emscripten/cache/sysroot/lib/pkgconfig:$EMSDK_ROOT/upstream/emscripten/cache/sysroot/share/pkgconfig" \
     cmake $OPENRCT_SRCROOT \
     -DOPENSSL_INCLUDE_DIR="$OPENSSL_ROOT/include" \
     -DOPENSSL_SSL_LIBRARY="$OPENSSL_ROOT/libssl.a" \
@@ -197,6 +182,8 @@ build_openrct2() {
     -DDISABLE_HTTP:BOOL=FALSE \
     -DDISABLE_TTF:BOOL=TRUE \
     -DENABLE_SCRIPTING:BOOL=FALSE \
+    -DDISABLE_VORBIS:BOOL=TRUE \
+    -DDISABLE_FLAC:BOOL=TRUE \
     -DCMAKE_SYSTEM_NAME=Emscripten
 
   DESTDIR=. emmake make install VERBOSE=1
