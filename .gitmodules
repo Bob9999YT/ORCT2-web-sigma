@@ -22,3 +22,9 @@
 [submodule "vendored/zlib"]
 	path = vendored/zlib
 	url = https://github.com/madler/zlib
+[submodule "vendored/ogg"]
+	path = vendored/ogg
+	url = https://gitlab.xiph.org/xiph/ogg
+[submodule "vendored/vorbis"]
+	path = vendored/vorbis
+	url = https://gitlab.xiph.org/xiph/vorbis

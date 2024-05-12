@@ -18,6 +18,10 @@ SPEEXDSP_ROOT="$VENDOR_ROOT/speexdsp"
 JSON_ROOT="$VENDOR_ROOT/json"
 ZLIB_ROOT="$VENDOR_ROOT/zlib"
 ZIP_ROOT="$VENDOR_ROOT/zip"
+OGG_ROOT="$VENDOR_ROOT/ogg"
+VORBIS_ROOT="$VENDOR_ROOT/vorbis"
+OGG_BUILD="$OGG_ROOT/build"
+VORBIS_BUILD="$VORBIS_ROOT/build"
 ZIP_BUILDROOT="$ZIP_ROOT/build"
 
 export MAKEFLAGS="-j$(nproc)"
@@ -80,6 +84,24 @@ build_zlib() {
   emcmake cmake $ZLIB_ROOT
   emmake make zlib || emmake make zlib
   emmake make install || emmake make install
+  popd
+}
+
+build_ogg() {
+  mkdir -p $OGG_BUILD
+  pushd $OGG_BUILD
+  emcmake cmake $OGG_ROOT
+  emmake make
+  emmake make install
+  popd
+}
+
+build_vorbis() {
+  mkdir -p $VORBIS_BUILD
+  pushd $VORBIS_BUILD
+  emcmake cmake $VORBIS_ROOT
+  emmake make
+  emmake make install
   popd
 }
 
@@ -182,7 +204,6 @@ build_openrct2() {
     -DDISABLE_HTTP:BOOL=FALSE \
     -DDISABLE_TTF:BOOL=TRUE \
     -DENABLE_SCRIPTING:BOOL=FALSE \
-    -DDISABLE_VORBIS:BOOL=TRUE \
     -DDISABLE_FLAC:BOOL=TRUE \
     -DCMAKE_SYSTEM_NAME=Emscripten
 
@@ -230,6 +251,8 @@ build_zip
 build_duktape
 build_icu
 build_speexdsp
+build_ogg
+build_vorbis
 build_openrct2_assets
 build_openrct2
 master_resources

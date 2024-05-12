@@ -103,11 +103,32 @@ RUN cd /app/vendored/speexdsp && \
   emmake ./configure --enable-shared --disable-neon && \
   emmake make
 
+COPY vendored/ogg /app/vendored/ogg
+
+RUN mkdir /app/vendored/ogg/build && \
+  cd /app/vendored/ogg/build && \
+  $PRE && \
+  emcmake cmake /app/vendored/ogg && \
+  emmake make install
+
+COPY vendored/vorbis /app/vendored/vorbis
+
+RUN mkdir /app/vendored/vorbis/build && \
+  cd /app/vendored/vorbis/build && \
+  $PRE && \
+  emcmake cmake /app/vendored/vorbis && \
+  emmake make install
+
 COPY vendored/OpenRCT2 /app/vendored/OpenRCT2
 
 RUN $PRE && \
   cd /app/assets && \
-  cmake /app/vendored/OpenRCT2 -DMACOS_BUNDLE=off -DDISABLE_NETWORK=on -DDISABLE_GUI=off && \
+  cmake /app/vendored/OpenRCT2 \
+    -DMACOS_BUNDLE=off \
+    -DDISABLE_NETWORK=on \
+    -DDISABLE_GUI=off \
+    -DDISABLE_VORBIS=on \
+    -DDISABLE_FLAC=on && \
   make openrct2-cli VERBOSE=1 && \
   make g2 && \
   DESTDIR=. make install && \
@@ -137,7 +158,6 @@ RUN cd /app/build && \
     -DDISABLE_TTF:BOOL=TRUE \
     -DENABLE_SCRIPTING:BOOL=FALSE \
     -DENABLE_SCRIPTING:BOOL=FALSE \
-    -DDISABLE_VORBIS:BOOL=TRUE \
     -DDISABLE_FLAC:BOOL=TRUE \
     -DCMAKE_SYSTEM_NAME=Emscripten && \
   DESTDIR=. emmake make install VERBOSE=1 || DESTDIR=. MAKEFLAGS= emmake make install VERBOSE=1
