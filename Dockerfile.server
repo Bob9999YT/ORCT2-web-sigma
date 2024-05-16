@@ -1,4 +1,4 @@
-FROM docker.io/openrct2/openrct2-cli:0.3.5.1
+FROM docker.io/openrct2/openrct2-cli:0.4.11
 
 USER 0
 
